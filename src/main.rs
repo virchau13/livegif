@@ -87,7 +87,9 @@ async fn frame_stream_to_gif_stream(
     let data = WritableArcRwLock::new(Vec::new());
     let mut encoder = Encoder::new(data.clone(), width as _, height as _, &[])
         .context("could not create encoder")?;
-    encoder.set_repeat(gif::Repeat::Finite(1)).context("could not set gif repeat")?;
+    encoder
+        .set_repeat(gif::Repeat::Finite(1))
+        .context("could not set gif repeat")?;
     Ok(FrameStreamToGifStream {
         encoder,
         data,
@@ -117,7 +119,17 @@ async fn serve_gifs(
                 eprintln!("error: {e}")
             }
         });
-    *resp.body_mut() = Body::wrap_stream(gif_stream);
+    // if it's discordbot, limit the frames, so it thinks it's valid
+    if req
+        .headers()
+        .get(hyper::header::USER_AGENT)
+        .and_then(|agent| agent.to_str().ok())
+        .map_or(false, |agent| agent.contains("Discordbot"))
+    {
+        *resp.body_mut() = Body::wrap_stream(gif_stream.take(10));
+    } else {
+        *resp.body_mut() = Body::wrap_stream(gif_stream);
+    }
     Ok(resp)
 }
 
@@ -152,7 +164,9 @@ async fn main() -> AnyhowResult<()> {
             gif_tx.send(next_frame)?;
             let proc_time = before_proc.elapsed() + frametime;
             // 30 FPS
-            std::thread::sleep(Duration::from_millis(1000 / draw::FPS as u64).saturating_sub(proc_time));
+            std::thread::sleep(
+                Duration::from_millis(1000 / draw::FPS as u64).saturating_sub(proc_time),
+            );
             //println!("time to compute frame: {}ms", proc_time.as_millis());
         }
         Err(AnyhowError::msg("FRAME GENERATOR HALTED"))
