@@ -1,0 +1,19 @@
+[package]
+name = "livegif"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = { version = "1.0.69", features = ["backtrace"] }
+cairo-rs = { version = "0.17.0", features = ["freetype"] }
+freetype-rs = "0.32.0"
+futures = "0.3.26"
+gif = "0.12.0"
+hyper = { version = "0.14.24", features = ["full", "stream"] }
+nalgebra = "0.32.1"
+pin-project = "1.0.12"
+rand = "0.8.5"
+tokio = { version = "1.25.0", features = ["full"] }
+tokio-stream = { version = "0.1.11", features = ["sync"] }
